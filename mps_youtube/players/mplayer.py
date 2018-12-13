@@ -105,7 +105,6 @@ class mplayer(CmdPlayer):
 
         self.p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE,
                                   stderr=subprocess.STDOUT, bufsize=1)
-        self._player_status(self.songdata + "; ", self.song.length)
         returncode = self.p.wait()
         print(returncode)
 

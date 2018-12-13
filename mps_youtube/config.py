@@ -324,7 +324,7 @@ class _Config:
             ConfigItem("columns", ""),
             ConfigItem("ddir", paths.get_default_ddir(), check_fn=check_ddir),
             ConfigItem("overwrite", True),
-            ConfigItem("show_video", False),
+            ConfigItem("show_video", True),
             ConfigItem("search_music", True),
             ConfigItem("window_pos", "", check_fn=check_win_pos,
                 require_known_player=True),

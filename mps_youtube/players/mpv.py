@@ -77,9 +77,6 @@ class mpv(CmdPlayer):
             util.dbg("%susing ignidx flag%s")
             util.list_update(pd["ignidx"], args)
 
-        if "--ytdl" in self.mpv_options:
-            util.list_update("--no-ytdl", args)
-
         msglevel = pd["msglevel"]["<0.4"]
 
         #  undetected (negative) version number assumed up-to-date
@@ -97,6 +94,8 @@ class mpv(CmdPlayer):
             util.list_update("--volume=" + str(g.volume), args)
         if self.softrepeat:
             util.list_update("--loop-file", args)
+
+        self.stream['url'] = "https://www.youtube.com/watch?v=" + self.song.ytid
 
         return [self.player] + args + [self.stream['url']]
 
@@ -135,7 +134,6 @@ class mpv(CmdPlayer):
             self.p = subprocess.Popen(cmd, shell=False, stderr=subprocess.PIPE,
                                       bufsize=1)
 
-        self._player_status(self.songdata + "; ", self.song.length)
         returncode = self.p.wait()
 
         if returncode == 42:

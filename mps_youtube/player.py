@@ -124,12 +124,6 @@ class BasePlayer:
         if config.NOTIFIER.get:
             subprocess.Popen(shlex.split(config.NOTIFIER.get) + [self.song.title])
 
-        size = streams.get_size(self.song.ytid, self.stream['url'])
-        songdata = (self.song.ytid, self.stream['ext'] + " " + self.stream['quality'],
-                    int(size / (1024 ** 2)))
-        self.songdata = "%s; %s; %s Mb" % songdata
-        screen.writestatus(self.songdata)
-
         self._launch_player()
         history.add(self.song)
 

@@ -273,6 +273,22 @@ class mpv(CmdPlayer):
         return lines.format(c.g, c.w)
 
 
+def _get_mpv_config_dir():
+    """ Get the user's mpv (as opposed to mps) configuration directory. """
+    if mswin:
+        confdir = os.environ["APPDATA"]
+
+    elif 'XDG_CONFIG_HOME' in os.environ:
+        confdir = os.environ['XDG_CONFIG_HOME']
+
+    else:
+        confdir = os.path.join(os.path.expanduser("~"), '.config')
+
+    mpv_confdir = os.path.join(confdir, "mpv")
+
+    return mpv_confdir
+
+
 def _get_input_file():
     """ Check for existence of custom input file.
 
@@ -280,7 +296,7 @@ def _get_input_file():
     """
     confpath = conf = ''
 
-    confpath = os.path.join(paths.get_config_dir(), "mpv-input.conf")
+    confpath = os.path.join(_get_mpv_config_dir(), "input.conf")
 
     if os.path.isfile(confpath):
         util.dbg("using %s for input key file", confpath)

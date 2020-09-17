@@ -9,6 +9,7 @@ import collections
 import unicodedata
 import urllib
 import json
+import platform
 from datetime import datetime, timezone
 
 import pafy
@@ -18,6 +19,7 @@ from .playlist import Video
 
 from importlib import import_module
 
+macos = platform.system() == "Darwin"
 
 mswin = os.name == "nt"
 not_utf8_environment = mswin or "UTF-8" not in sys.stdout.encoding
@@ -124,6 +126,18 @@ def mswinfn(filename):
 
     return filename
 
+def sanitize_filename(filename, ignore_slashes=False):
+    """ Sanitize filename """
+    if not ignore_slashes:
+        filename = filename.replace('/', '-')
+    if macos:
+        filename = filename.replace(':', '_')
+    if mswin:
+        filename = utf8_replace(filename) if not_utf8_environment else filename
+        allowed = re.compile(r'[^\\?*$\'"%&:<>|]')
+        filename = "".join(x if allowed.match(x) else "_" for x in filename)
+
+    return filename
 
 def set_window_title(title):
     """ Set terminal window title. """
@@ -259,6 +273,21 @@ def fmt_time(seconds):
 
     return hms
 
+def correct_truncate(text, max_len):
+    """ Truncate a string taking into account East Asian width chars."""
+    str_len, out = 0, ''
+
+    for c in text:
+        str_len += real_len(c)
+
+        if str_len <= max_len:
+            out += c
+
+        else:
+            break
+
+    return out
+
 
 def uea_pad(num, t, direction="<", notrunc=False):
     """ Right pad with spaces taking into account East Asian width chars. """
@@ -272,7 +301,7 @@ def uea_pad(num, t, direction="<", notrunc=False):
 
     if not notrunc:
         # Truncate to max of num characters
-        t = t[:num]
+        t = correct_truncate(t, num)
 
     if real_len(t) < num:
         spaces = num - real_len(t)
@@ -314,7 +343,7 @@ def real_len(u, alt=False):
 
 def yt_datetime(yt_date_time):
     """ Return a time object, locale formated date string and locale formatted time string. """
-    time_obj = time.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    time_obj = time.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%SZ")
     locale_date = time.strftime("%x", time_obj)
     locale_time = time.strftime("%X", time_obj)
     # strip first two digits of four digit year
@@ -324,7 +353,7 @@ def yt_datetime(yt_date_time):
 
 def yt_datetime_local(yt_date_time):
     """ Return a datetime object, locale converted and formated date string and locale converted and formatted time string. """
-    datetime_obj = datetime.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    datetime_obj = datetime.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%SZ")
     datetime_obj = utc2local(datetime_obj)
     locale_date = datetime_obj.strftime("%x")
     locale_time = datetime_obj.strftime("%X")

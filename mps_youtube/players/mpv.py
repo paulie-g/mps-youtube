@@ -16,22 +16,13 @@ not_utf8_environment = mswin or "UTF-8" not in sys.stdout.encoding
 
 
 class mpv(CmdPlayer):
-    DEFAULT_ARGS = {
-        "msglevel": {"<0.4": "--msglevel=all=no:statusline=status",
-                     ">=0.4": "--msg-level=all=no:statusline=status"},
-        "title": "--title",
-        "fs": "--fs",
-        "novid": "--no-video",
-        "ignidx": "--demuxer-lavf-o=fflags=+ignidx",
-        "geo": "--geometry"
-    }
-
     def __init__(self, player):
         self.player = player
         self.mpv_version = _get_mpv_version(player)
         self.mpv_options = subprocess.check_output(
                 [player, "--list-options"]).decode()
 
+        self.mpv_usesock = ""
         if not mswin:
             if "--input-unix-socket" in self.mpv_options:
                 self.mpv_usesock = "--input-unix-socket"
@@ -49,8 +40,11 @@ class mpv(CmdPlayer):
 
         args = config.PLAYERARGS.get.strip().split()
 
-        pd = self.DEFAULT_ARGS
-        args.extend((pd["title"], '"{0}"'.format(self.song.title)))
+        pd = g.playerargs_defaults['mpv']
+        # Use new mpv syntax
+        # https://github.com/mps-youtube/mps-youtube/issues/1052
+        completetitle = '='.join((pd["title"], '"{0}"'.format(self.song.title)))
+        util.list_update(completetitle, args)
 
         if pd['geo'] not in args:
             geometry = config.WINDOW_SIZE.get or ""
@@ -62,7 +56,10 @@ class mpv(CmdPlayer):
                 geometry += xx + yy
 
             if geometry:
-                args.extend((pd['geo'], geometry))
+                # Use new mpv syntax
+                # See: https://github.com/mps-youtube/mps-youtube/issues/1052
+                newgeometry = '='.join((pd['geo'], geometry))
+                util.list_update(newgeometry, args)
 
         # handle no audio stream available
         if self.override == "a-v":

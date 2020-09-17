@@ -72,9 +72,10 @@ class BasePlayer:
                 lastfm.set_now_playing(g.artist, g.scrobble_queue[self.song_no])
 
             try:
-                self.video, self.stream = stream_details(self.song,
-                                                         override=self.override,
-                                                         softrepeat=self.softrepeat)
+                self.video, self.stream, self.override = stream_details(
+                                                            self.song,
+                                                            override=self.override,
+                                                            softrepeat=self.softrepeat)
                 self._playsong()
 
             except KeyboardInterrupt:
@@ -129,7 +130,9 @@ class BasePlayer:
             subprocess.Popen(shlex.split(config.NOTIFIER.get) + [self.song.title])
 
         self._launch_player()
-        history.add(self.song)
+        
+        if config.HISTORY.get:
+            history.add(self.song)
 
     def _launch_player(self):
         """ Launch player application. """
@@ -354,7 +357,7 @@ def stream_details(song, failcount=0, override=False, softrepeat=False):
         if not stream:
             raise IOError("No streams available")
 
-        return (video, stream)
+        return (video, stream, override)
 
     except (HTTPError) as e:
 

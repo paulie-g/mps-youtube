@@ -539,7 +539,7 @@ class MprisConnection(object):
                 self.connection.send(obj)
             except BrokenPipeError:
                 self.connection = None
-                print('MPRIS process exited of crashed.')
+                print('MPRIS process exited or crashed.')
 
 
 def main(connection):
@@ -555,8 +555,9 @@ def main(connection):
         return
     try:
         mprisctl.acquire()
-    except dbus.exceptions.DBusException:
-        print('mpris interface couldn\'t be initialized. Is dbus properly configured?')
+    except dbus.exceptions.DBusException as e:
+        print('mpris interface couldn\'t be initialized. reason: %s'
+               % e.get_dbus_message())
         return
     mprisctl.run(connection)
     mprisctl.release()

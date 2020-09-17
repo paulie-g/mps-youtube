@@ -23,7 +23,7 @@ Features
 - Works with Windows, Linux and Mac OS X
 - Requires mplayer or mpv
 
-This project is based on `mps <https://github.com/np1/mps>`_, a terminal based program to search, stream and download music.  This implementation uses YouTube as a source of content and can play and download video as well as audio.  The `pafy <https://github.com/mps-youtube/pafy>`_ library handles interfacing with YouTube.
+This project is based on `mps <https://web.archive.org/web/20180429034221/https://github.com/np1/mps>`_, a terminal based program to search, stream and download music.  This implementation uses YouTube as a source of content and can play and download video as well as audio.  The `pafy <https://github.com/mps-youtube/pafy>`_ library handles interfacing with YouTube.
 
 `FAQ / Troubleshooting common issues <https://github.com/mps-youtube/mps-youtube/wiki/Troubleshooting>`_
 
@@ -37,6 +37,8 @@ Search
 
 A standard search is performed by entering ``/`` followed by search terms.
 
+**Note**: You can play all of the search results by giving ``1-`` as input
+
 Local Playlists
 ~~~~~~~~~~~~~~~
 .. image:: http://mps-youtube.github.io/mps-youtube/local-playlist.png
@@ -48,6 +50,8 @@ YouTube Playlists
 .. image:: http://mps-youtube.github.io/mps-youtube/playlist-search.png
 
 YouTube playlists can be searched and played or saved as local playlists.
+
+A playlist search is performed by ``//`` followed by search term.
 
 Download
 ~~~~~~~~
@@ -104,6 +108,10 @@ To install the experimental development version and try the latest features::
 Installing youtube-dl is highly recommended::
 
     $ pip3 install --user youtube-dl
+    and to upgrade:
+    $ pip3 install --user youtube-dl --upgrade
+
+(youtube-dl version dowloaded directly from youtube-dl website can't be used by mps-youtube. While the version in the repositories is usually outdated)
 
 For mpris2 support, install the python bindings for dbus and gobject::
 
@@ -111,13 +119,13 @@ For mpris2 support, install the python bindings for dbus and gobject::
 
 Ubuntu
 ~~~~~~
-You can install mps-youtube directly from the official repositories:
+You can install mps-youtube directly from the official repositories::
 
     [sudo] apt install mps-youtube
 
 Arch Linux
 ~~~~~~
-You can install mps-youtube directly from the official repositories:
+You can install mps-youtube directly from the official repositories::
 
     [sudo] pacman -S mps-youtube
 
@@ -125,7 +133,7 @@ macOS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Install mpv (recommended player) with `Homebrew <http://brew.sh>`_::
 
-    brew install mpv
+    brew cask install mpv
 
 Alternately, you can install mplayer with `MacPorts <http://www.macports.org>`_::
 

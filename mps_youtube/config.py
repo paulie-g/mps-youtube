@@ -3,6 +3,7 @@ import re
 import sys
 import copy
 import pickle
+import json
 from urllib.request import urlopen
 from urllib.error import HTTPError
 from urllib.parse import urlencode
@@ -311,7 +312,7 @@ class _Config:
             ConfigItem("max_results", 19, maxval=50, minval=1),
             ConfigItem("console_width", 80, minval=70,
                 maxval=880, check_fn=check_console_width),
-            ConfigItem("max_res", 2160, minval=192, maxval=2160),
+            ConfigItem("max_res", 2160, minval=360, maxval=2160),
             ConfigItem("player", "mplayer" + ".exe" * mswin,
                 check_fn=check_player),
             ConfigItem("playerargs", ""),
@@ -347,6 +348,8 @@ class _Config:
             ConfigItem("set_title", True),
             ConfigItem("mpris", not mswin),
             ConfigItem("show_qrcode", False),
+            ConfigItem("history", True), 
+            ConfigItem("input_history", True)
             ]
 
     def __getitem__(self, key):
@@ -369,17 +372,28 @@ class _Config:
         """ Save current config to file. """
         config = {setting: self[setting].value for setting in self}
 
-        with open(g.CFFILE, "wb") as cf:
-            pickle.dump(config, cf, protocol=2)
+        with open(g.CFFILE, "w") as cf:
+            json.dump(config, cf, indent=2)
 
         util.dbg(c.p + "Saved config: " + g.CFFILE + c.w)
+
+    def convert_old_cf_to_json(self):
+        """
+        check if old-style config exists,
+        convert old-style pickled binary config to json and save to disk,
+        delete old-style config
+        """
+        if os.path.exists(g.OLD_CFFILE):
+            with open(g.OLD_CFFILE, "rb") as cf:
+                with open(g.CFFILE, "w") as cfj:
+                    json.dump(pickle.load(cf), cfj, indent=2)
+            os.remove(g.OLD_CFFILE)
 
     def load(self):
         """ Override config if config file exists. """
         if os.path.exists(g.CFFILE):
-
-            with open(g.CFFILE, "rb") as cf:
-                saved_config = pickle.load(cf)
+            with open(g.CFFILE, "r") as cf:
+                saved_config = json.load(cf)
 
             for k, v in saved_config.items():
 

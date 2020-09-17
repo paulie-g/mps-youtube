@@ -9,6 +9,7 @@ import collections
 import unicodedata
 import urllib
 import json
+import platform
 from datetime import datetime, timezone
 
 import pafy
@@ -16,6 +17,9 @@ import pafy
 from . import g, c, terminalsize, description_parser
 from .playlist import Video
 
+from importlib import import_module
+
+macos = platform.system() == "Darwin"
 
 mswin = os.name == "nt"
 not_utf8_environment = mswin or "UTF-8" not in sys.stdout.encoding
@@ -122,6 +126,18 @@ def mswinfn(filename):
 
     return filename
 
+def sanitize_filename(filename, ignore_slashes=False):
+    """ Sanitize filename """
+    if not ignore_slashes:
+        filename = filename.replace('/', '-')
+    if macos:
+        filename = filename.replace(':', '_')
+    if mswin:
+        filename = utf8_replace(filename) if not_utf8_environment else filename
+        allowed = re.compile(r'[^\\?*$\'"%&:<>|]')
+        filename = "".join(x if allowed.match(x) else "_" for x in filename)
+
+    return filename
 
 def set_window_title(title):
     """ Set terminal window title. """
@@ -257,6 +273,21 @@ def fmt_time(seconds):
 
     return hms
 
+def correct_truncate(text, max_len):
+    """ Truncate a string taking into account East Asian width chars."""
+    str_len, out = 0, ''
+
+    for c in text:
+        str_len += real_len(c)
+
+        if str_len <= max_len:
+            out += c
+
+        else:
+            break
+
+    return out
+
 
 def uea_pad(num, t, direction="<", notrunc=False):
     """ Right pad with spaces taking into account East Asian width chars. """
@@ -270,7 +301,7 @@ def uea_pad(num, t, direction="<", notrunc=False):
 
     if not notrunc:
         # Truncate to max of num characters
-        t = t[:num]
+        t = correct_truncate(t, num)
 
     if real_len(t) < num:
         spaces = num - real_len(t)
@@ -312,7 +343,7 @@ def real_len(u, alt=False):
 
 def yt_datetime(yt_date_time):
     """ Return a time object, locale formated date string and locale formatted time string. """
-    time_obj = time.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    time_obj = time.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%SZ")
     locale_date = time.strftime("%x", time_obj)
     locale_time = time.strftime("%X", time_obj)
     # strip first two digits of four digit year
@@ -322,7 +353,7 @@ def yt_datetime(yt_date_time):
 
 def yt_datetime_local(yt_date_time):
     """ Return a datetime object, locale converted and formated date string and locale converted and formatted time string. """
-    datetime_obj = datetime.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    datetime_obj = datetime.strptime(yt_date_time, "%Y-%m-%dT%H:%M:%SZ")
     datetime_obj = utc2local(datetime_obj)
     locale_date = datetime_obj.strftime("%x")
     locale_time = datetime_obj.strftime("%X")
@@ -421,7 +452,7 @@ def load_player_info(player):
         g.mplayer_version = _get_mplayer_version(player)
 
 
-def fetch_songs(text,title="Unknown"):
+def fetch_songs(text, title="Unknown"):
     return description_parser.parse(text, title)
 
 
@@ -475,18 +506,19 @@ def _get_mplayer_version(exename):
 
     return ver
 
-def _get_metadata(song_title) :
+
+def _get_metadata(song_title):
     ''' Get metadata from a song title '''
     t = re.sub("[\(\[].*?[\)\]]", "", song_title.lower())
     t = t.split('-')
 
-    if len(t) != 2 : #If len is not 2, no way of properly knowing title for sure
+    if len(t) != 2:  # If len is not 2, no way of properly knowing title for sure
         t = t[0]
         t = t.split(':')
-        if len(t) != 2 :  #Ugly, but to be safe in case all these chars exist, Will improve
+        if len(t) != 2:  # Ugly, but to be safe in case all these chars exist, Will improve
             t = t[0]
             t = t.split('|')
-            if len(t) != 2 :
+            if len(t) != 2:
                 return None
 
     t[0] = re.sub("(ft |ft.|feat |feat.).*.", "", t[0])
@@ -497,33 +529,68 @@ def _get_metadata(song_title) :
 
     metadata = _get_metadata_from_lastfm(t[0], t[1])
 
-    if metadata != None :
+    if metadata is not None:
         return metadata
 
     metadata = _get_metadata_from_lastfm(t[1], t[0])
     return metadata
 
-def _get_metadata_from_lastfm(artist, track) :
+
+def _get_metadata_from_lastfm(artist, track):
     ''' Try to get metadata with a given artist and track '''
-    url = 'http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=12dec50313f885d407cf8132697b8712&'
-    url += urllib.parse.urlencode({"artist" :  artist}) + '&'
-    url += urllib.parse.urlencode({"track" :  track}) + '&'
+    url = 'https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=12dec50313f885d407cf8132697b8712&'
+    url += urllib.parse.urlencode({"artist":  artist}) + '&'
+    url += urllib.parse.urlencode({"track":  track}) + '&'
     url += '&format=json'
 
-    resp = urllib.request.urlopen(url)
-
-    metadata = dict()
-
-    data = json.loads(resp.read())
-
-    if 'track' != list(data.keys())[0] :
-        return None
-    try :
+    try:
+        resp = urllib.request.urlopen(url)
+        metadata = dict()
+        # Prior to Python 3.6, json.loads cannot take a bytes object
+        data = json.loads(resp.read().decode('utf-8'))
         metadata['track_title'] = data['track']['name']
         metadata['artist'] = data['track']['artist']['name']
         metadata['album'] = data['track']['album']['title']
         metadata['album_art_url'] = data['track']['album']['image'][-1]['#text']
-    except :
+    except (KeyError, IndexError):
         return None
-
+    except (urllib.error.HTTPError, urllib.error.URLError):
+        return None
     return metadata
+
+
+def assign_player(player):
+    module_name = player
+
+    if '/' in module_name:
+        module_name = module_name.split('/')[-1]
+    if module_name.endswith('.com') or module_name.endswith('.exe'):
+        module_name = module_name.split('.')[0]
+
+    try:
+        module = import_module('mps_youtube.players.{0}'.format(module_name))
+        pl = getattr(module, module_name)
+        g.PLAYER_OBJ = pl(player)
+
+    except ImportError:
+        from mps_youtube.players import GenericPlayer
+        g.PLAYER_OBJ = GenericPlayer.GenericPlayer(player)
+
+
+class CommandCompleter:
+
+    COMMANDS = []
+
+    def __init__(self):
+        from . import config
+        self.SET_COMMANDS = ['set ' + i.lower() for i in config]
+
+    def complete_command(self, text, state):
+        if text.startswith('set'):
+            results = [x for x in self.SET_COMMANDS if x.startswith(text)] + [None]
+        else:
+            results = [x for x in self.COMMANDS if x.startswith(text)] + [None]
+        return results[state]
+    def add_cmd(self, val):
+        if(not val in self.COMMANDS):
+            self.COMMANDS.append(val)

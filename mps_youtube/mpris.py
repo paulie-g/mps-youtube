@@ -90,8 +90,8 @@ class Mpris2Controller:
         """
             Notifies interfaces that player connection changed
         """
-        try:
-            while True:
+        while True:
+            try:
                 data = conn.recv()
                 if isinstance(data, tuple):
                     name, val = data
@@ -103,8 +103,10 @@ class Mpris2Controller:
                         self.mpris.bindfifo(val, mpv=True)
                     else:
                         self.mpris.setproperty(name, val)
-        except IOError:
-            pass
+            except IOError:
+                break
+            except KeyboardInterrupt:
+                pass
 
     def _acquire_bus(self):
         """
@@ -293,17 +295,20 @@ class Mpris2MediaPlayer(dbus.service.Object):
         elif name == 'metadata' and val:
             trackid, title, length, arturl, artist, album = val
             # sanitize ytid - it uses '-_' which are not valid in dbus paths
-            trackid = re.sub('[^a-zA-Z0-9]', '', trackid)
+            trackid_sanitized = re.sub('[^a-zA-Z0-9]', '', trackid)
+            yturl = 'https://www.youtube.com/watch?v=' + trackid
 
             oldval = self.properties[PLAYER_INTERFACE]['read_only']['Metadata']
             newval = {
                 'mpris:trackid' : dbus.ObjectPath(
-                    '/CurrentPlaylist/ytid/' + trackid, variant_level=1),
+                    '/CurrentPlaylist/ytid/' + trackid_sanitized, variant_level=1),
                 'mpris:length' : dbus.Int64(length * 10**6, variant_level=1),
                 'mpris:artUrl' : dbus.String(arturl, variant_level=1),
                 'xesam:title' : dbus.String(title, variant_level=1),
                 'xesam:artist' : dbus.Array(artist, 's', 1),
-                'xesam:album' : dbus.String(album, variant_level=1) }
+                'xesam:album' : dbus.String(album, variant_level=1),
+                'xesam:url' : dbus.String(yturl, variant_level=1),
+            }
 
             if newval != oldval:
                 self.properties[PLAYER_INTERFACE]['read_only']['Metadata'] = newval
@@ -534,7 +539,7 @@ class MprisConnection(object):
                 self.connection.send(obj)
             except BrokenPipeError:
                 self.connection = None
-                print('MPRIS process exited of crashed.')
+                print('MPRIS process exited or crashed.')
 
 
 def main(connection):
@@ -550,8 +555,9 @@ def main(connection):
         return
     try:
         mprisctl.acquire()
-    except dbus.exceptions.DBusException:
-        print('mpris interface couldn\'t be initialized. Is dbus properly configured?')
+    except dbus.exceptions.DBusException as e:
+        print('mpris interface couldn\'t be initialized. reason: %s'
+               % e.get_dbus_message())
         return
     mprisctl.run(connection)
     mprisctl.release()

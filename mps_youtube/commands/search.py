@@ -16,7 +16,7 @@ parser.add_argument('search', nargs='+')
 
 import pafy
 
-from .. import g, c, screen, config, util, content, listview, contentquery, player
+from .. import g, c, screen, config, util, content, listview, contentquery
 from ..playlist import Video, Playlist
 from . import command
 from .songlist import plist, paginatesongs
@@ -185,7 +185,7 @@ def channelsearch(q_user):
     g.message = "Results for channel search: '%s'" % q_user
 
 
-@command(r'user\s+(.+)')
+@command(r'user\s+(.+)', 'user')
 def usersearch(q_user, identify='forUsername'):
     """ Fetch uploads by a YouTube user. """
 
@@ -249,7 +249,7 @@ def related_search(vitem):
 
 
 # Livestream category search
-@command(r'live\s+(.+)')
+@command(r'live\s+(.+)', 'live')
 def livestream_category_search(term):
     sel_category = g.categories.get(term, None)
 
@@ -275,14 +275,18 @@ def livestream_category_search(term):
 
     def start_stream(returned):
         songs = Playlist("Search Results", [Video(*x) for x in returned])
-        player.play_range(songs, False, False, False)
+        if not config.PLAYER.get or not util.has_exefile(config.PLAYER.get):
+            g.message = "Player not configured! Enter %sset player <player_app> "\
+                        "%s to set a player" % (c.g, c.w)
+            return
+        g.PLAYER_OBJ.play(songs, False, False, False)
 
     g.content = listview.ListView(columns, query_obj, start_stream)
     g.message = "Livestreams in category: '%s'" % term
 
 
 # Note: [^./] is to prevent overlap with playlist search command
-@command(r'(?:search|\.|/)\s*([^./].{1,500})')
+@command(r'(?:search|\.|/)\s*([^./].{1,500})', 'search')
 def search(term):
     """ Perform search. """
     try:  # TODO make use of unknowns
@@ -313,13 +317,13 @@ def search(term):
     _search(term, query, msg, failmsg)
 
 
-@command(r'u(?:ser)?pl\s(.*)')
+@command(r'u(?:ser)?pl\s(.*)', 'userpl', 'upl')
 def user_pls(user):
     """ Retrieve user playlists. """
     return pl_search(user, is_user=True)
 
 
-@command(r'(?:\.\.|\/\/|pls(?:earch)?\s)\s*(.*)')
+@command(r'(?:\.\.|\/\/|pls(?:earch)?\s)\s*(.*)', 'plsearch')
 def pl_search(term, page=0, splash=True, is_user=False):
     """ Search for YouTube playlists.
 
@@ -542,7 +546,7 @@ def num_repr(num):
     return str(rounded)[0] + "." + str(rounded)[1] + suffix
 
 
-@command(r'u\s?([\d]{1,4})')
+@command(r'u\s?([\d]{1,4})', 'u')
 def user_more(num):
     """ Show more videos from user of vid num. """
     if g.browse_mode != "normal":
@@ -565,7 +569,7 @@ def user_more(num):
     usersearch_id(user, channel_id, '')
 
 
-@command(r'r\s?(\d{1,4})')
+@command(r'r\s?(\d{1,4})', 'r')
 def related(num):
     """ Show videos related to to vid num. """
     if g.browse_mode != "normal":
@@ -579,7 +583,7 @@ def related(num):
     related_search(item)
 
 
-@command(r'mix\s*(\d{1,4})')
+@command(r'mix\s*(\d{1,4})', 'mix')
 def mix(num):
     """ Retrieves the YouTube mix for the selected video. """
     g.content = g.content or content.generate_songlist_display()
@@ -598,7 +602,7 @@ def mix(num):
             g.message = util.F('no mix')
 
 
-@command(r'url\s(.*[-_a-zA-Z0-9]{11}.*)')
+@command(r'url\s(.*[-_a-zA-Z0-9]{11}.*)', 'url')
 def yt_url(url, print_title=0):
     """ Acess videos by urls. """
     url_list = url.split()
@@ -626,7 +630,7 @@ def yt_url(url, print_title=0):
         util.xprint(v.title)
 
 
-@command(r'url_file\s(\S+)')
+@command(r'url_file\s(\S+)', 'url_file')
 def yt_url_file(file_name):
     """ Access a list of urls in a text file """
 

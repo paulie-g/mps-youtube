@@ -3,6 +3,7 @@ import re
 import sys
 import copy
 import pickle
+import json
 from urllib.request import urlopen
 from urllib.error import HTTPError
 from urllib.parse import urlencode
@@ -32,6 +33,7 @@ class ConfigItem:
 
         """
         self.default = self.value = value
+        self.temp_value = None
         self.name = name
         self.type = type(value)
         self.maxval, self.minval = maxval, minval
@@ -44,13 +46,22 @@ class ConfigItem:
     @property
     def get(self):
         """ Return value. """
-        return self.value
+        if self.temp_value is None:
+            return self.value
+        else:
+            return self.temp_value
 
     @property
     def display(self):
         """ Return value in a format suitable for display. """
-        retval = self.value
+        return self.display_helper(self.value)
 
+    @property
+    def display_temp(self):
+        if self.temp_value is None: return ""
+        return self.display_helper(self.temp_value)
+
+    def display_helper(self, retval):
         if self.name == "max_res":
             retval = str(retval) + "p"
 
@@ -59,7 +70,7 @@ class ConfigItem:
 
         return retval
 
-    def set(self, value):
+    def set(self, value, is_temp=False):
         """ Set value with checks. """
         # note: fail_msg should contain %s %s for self.name, value
         #       success_msg should not
@@ -146,18 +157,23 @@ class ConfigItem:
 
             if checked['valid']:
                 value = checked.get("value", value)
-                self.value = value
-                Config.save()
+                set_save(self, value, is_temp)
                 return checked.get("message", success_msg)
 
             else:
                 return checked.get('message', fail_msg)
 
         elif success_msg:
-            self.value = value
-            Config.save()
+            set_save(self, value, is_temp)
             return success_msg
 
+def set_save(self, value, is_temp):
+    if not is_temp:
+        self.temp_value = None
+        self.value = value
+        Config.save()
+    else:
+        self.temp_value = value
 
 def check_console_width(val):
     """ Show ruler to check console width. """
@@ -250,8 +266,8 @@ def check_encoder(option):
 def check_player(player):
     """ Check player exefile exists and get mpv version. """
     if util.has_exefile(player):
-        util.load_player_info(player)
-
+        print(player)
+        util.assign_player(player)
         if "mpv" in player:
             version = "%s.%s.%s" % g.mpv_version
             fmt = c.g, c.w, c.g, c.w, version
@@ -275,12 +291,14 @@ def check_player(player):
             msg = "Player application %s%s%s not found" % (c.r, player, c.w)
             return dict(valid=False, message=msg)
 
+
 def check_lastfm_password(password):
     if not has_pylast:
         msg = "pylast not installed"
         return dict(valid=False, message=msg)
     password_hash = pylast.md5(password)
     return dict(valid=True, value=password_hash)
+
 
 class _Config:
 
@@ -294,26 +312,28 @@ class _Config:
             ConfigItem("max_results", 19, maxval=50, minval=1),
             ConfigItem("console_width", 80, minval=70,
                 maxval=880, check_fn=check_console_width),
-            ConfigItem("max_res", 2160, minval=192, maxval=2160),
+            ConfigItem("max_res", 2160, minval=360, maxval=2160),
             ConfigItem("player", "mplayer" + ".exe" * mswin,
                 check_fn=check_player),
             ConfigItem("playerargs", ""),
             ConfigItem("encoder", 0, minval=0, check_fn=check_encoder),
             ConfigItem("notifier", ""),
             ConfigItem("checkupdate", True),
-            ConfigItem("show_mplayer_keys", True, require_known_player=True),
+            ConfigItem("show_player_keys", True, require_known_player=True),
             ConfigItem("fullscreen", False, require_known_player=True),
             ConfigItem("show_status", True),
+            ConfigItem("always_repeat", False),
             ConfigItem("columns", ""),
             ConfigItem("ddir", paths.get_default_ddir(), check_fn=check_ddir),
             ConfigItem("overwrite", True),
-            ConfigItem("show_video", False),
+            ConfigItem("show_video", True),
             ConfigItem("search_music", True),
             ConfigItem("window_pos", "", check_fn=check_win_pos,
                 require_known_player=True),
             ConfigItem("window_size", "",
                 check_fn=check_win_size, require_known_player=True),
             ConfigItem("download_command", ''),
+            ConfigItem("lookup_metadata", True),
             ConfigItem("lastfm_username", ''),
             ConfigItem("lastfm_password", '', check_fn=check_lastfm_password),
             ConfigItem("lastfm_api_key", ''),
@@ -327,6 +347,9 @@ class _Config:
             ConfigItem("autoplay", False),
             ConfigItem("set_title", True),
             ConfigItem("mpris", not mswin),
+            ConfigItem("show_qrcode", False),
+            ConfigItem("history", True), 
+            ConfigItem("input_history", True)
             ]
 
     def __getitem__(self, key):
@@ -349,17 +372,28 @@ class _Config:
         """ Save current config to file. """
         config = {setting: self[setting].value for setting in self}
 
-        with open(g.CFFILE, "wb") as cf:
-            pickle.dump(config, cf, protocol=2)
+        with open(g.CFFILE, "w") as cf:
+            json.dump(config, cf, indent=2)
 
         util.dbg(c.p + "Saved config: " + g.CFFILE + c.w)
+
+    def convert_old_cf_to_json(self):
+        """
+        check if old-style config exists,
+        convert old-style pickled binary config to json and save to disk,
+        delete old-style config
+        """
+        if os.path.exists(g.OLD_CFFILE):
+            with open(g.OLD_CFFILE, "rb") as cf:
+                with open(g.CFFILE, "w") as cfj:
+                    json.dump(pickle.load(cf), cfj, indent=2)
+            os.remove(g.OLD_CFFILE)
 
     def load(self):
         """ Override config if config file exists. """
         if os.path.exists(g.CFFILE):
-
-            with open(g.CFFILE, "rb") as cf:
-                saved_config = pickle.load(cf)
+            with open(g.CFFILE, "r") as cf:
+                saved_config = json.load(cf)
 
             for k, v in saved_config.items():
 

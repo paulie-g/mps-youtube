@@ -7,6 +7,14 @@ import pafy
 from . import g, c, config
 from .util import getxy, fmt_time, uea_pad, yt_datetime, F
 
+try:
+    import qrcode
+    import io
+    HAS_QRCODE = True
+except ImportError:
+    HAS_QRCODE = False
+
+
 # In the future, this could support more advanced features
 class Content:
     pass
@@ -116,15 +124,14 @@ def generate_songlist_display(song=False, zeromsg=None):
         cat = details.get('category') or '-'
         details['category'] = pafy.get_categoryname(cat)
         details['ytid'] = x.ytid
-        data = []
+        line = ''
 
         for z in columns:
-            fieldsize, field = z['size'], z['name']
-            if len(details[field]) > fieldsize:
-                details[field] = details[field][:fieldsize]
-            data.append(details[field])
+            fieldsize, field, direction = z['size'], z['name'], "<" if z['sign'] == "-" else ">"
+            line += uea_pad(fieldsize, details[field], direction)
+            if not columns[-1] == z:
+                line += "  "
 
-        line = fmtrow % tuple(data)
         col = col if not song or song != g.model[n] else c.p
         line = col + line + c.w
         out += line + "\n"
@@ -238,3 +245,14 @@ def playlists_display():
         out += l
 
     return out
+
+
+def qrcode_display(url):
+    if not HAS_QRCODE:
+        return "(Install 'qrcode' to generate them)"
+    qr = qrcode.QRCode()
+    buf = io.StringIO()
+    buf.isatty = lambda: True
+    qr.add_data(url)
+    qr.print_ascii(out=buf)
+    return buf.getvalue()

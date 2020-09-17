@@ -50,7 +50,8 @@ streams = collections.OrderedDict()
 pafy_pls = {}  #
 last_opened = message = content = ""
 suffix = "3" # Python 3
-CFFILE = os.path.join(paths.get_config_dir(), "config")
+OLD_CFFILE = os.path.join(paths.get_config_dir(), "config")
+CFFILE = os.path.join(paths.get_config_dir(), "config.json")
 TCFILE = os.path.join(paths.get_config_dir(), "transcode")
 OLD_PLFILE = os.path.join(paths.get_config_dir(), "playlist" + suffix)
 PLFILE = os.path.join(paths.get_config_dir(), "playlist_v2")
@@ -59,6 +60,7 @@ OLDHISTFILE = os.path.join(paths.get_config_dir(), "play_history")
 HISTFILE = os.path.join(paths.get_config_dir(), "play_history.m3u")
 CACHEFILE = os.path.join(paths.get_config_dir(), "cache_py_" + sys.version[0:5])
 READLINE_FILE = None
+PLAYER_OBJ = None
 categories = {
         "film":      1,
         "autos":     2,
@@ -73,7 +75,7 @@ playerargs_defaults = {
     "mpv": {
         "msglevel": {"<0.4": "--msglevel=all=no:statusline=status",
                      ">=0.4": "--msg-level=all=no:statusline=status"},
-        "title": "--title",
+        "title": "--force-media-title",
         "fs": "--fs",
         "novid": "--no-video",
         "ignidx": "--demuxer-lavf-o=fflags=+ignidx",
@@ -84,7 +86,9 @@ playerargs_defaults = {
         "novid": "-novideo",
         # "ignidx": "-lavfdopts o=fflags=+ignidx".split()
         "ignidx": "",
-        "geo": "-geometry"}
+        "geo": "-geometry"},
+    "vlc": {
+        "title": "--meta-title"}
     }
 argument_commands = []
 commands = []

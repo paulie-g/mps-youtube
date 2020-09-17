@@ -23,9 +23,9 @@ Features
 - Works with Windows, Linux and Mac OS X
 - Requires mplayer or mpv
 
-This project is based on `mps <https://github.com/np1/mps>`_, a terminal based program to search, stream and download music.  This implementation uses YouTube as a source of content and can play and download video as well as audio.  The `pafy <https://github.com/np1/pafy>`_ library handles interfacing with YouTube.
+This project is based on `mps <https://web.archive.org/web/20180429034221/https://github.com/np1/mps>`_, a terminal based program to search, stream and download music.  This implementation uses YouTube as a source of content and can play and download video as well as audio.  The `pafy <https://github.com/mps-youtube/pafy>`_ library handles interfacing with YouTube.
 
-`FAQ / Troubleshooting common issues <https://github.com/np1/mps-youtube/wiki/Troubleshooting>`_
+`FAQ / Troubleshooting common issues <https://github.com/mps-youtube/mps-youtube/wiki/Troubleshooting>`_
 
 Screenshots
 -----------
@@ -33,47 +33,51 @@ Screenshots
 
 Search
 ~~~~~~
-.. image:: http://np1.github.io/mpsyt-images2/std-search.png
+.. image:: http://mps-youtube.github.io/mps-youtube/std-search.png
 
 A standard search is performed by entering ``/`` followed by search terms.
 
+**Note**: You can play all of the search results by giving ``1-`` as input
+
 Local Playlists
 ~~~~~~~~~~~~~~~
-.. image:: http://np1.github.io/mpsyt-images2/local-playlists.png
+.. image:: http://mps-youtube.github.io/mps-youtube/local-playlist.png
 
 Search result items can easily be stored in local playlists.
 
 YouTube Playlists
 ~~~~~~~~~~~~~~~~~
-.. image:: http://np1.github.io/mpsyt-images2/playlist-search.png
+.. image:: http://mps-youtube.github.io/mps-youtube/playlist-search.png
 
 YouTube playlists can be searched and played or saved as local playlists.
 
+A playlist search is performed by ``//`` followed by search term.
+
 Download
 ~~~~~~~~
-.. image:: http://np1.github.io/mpsyt-images2/download.png
+.. image:: http://mps-youtube.github.io/mps-youtube/download.png
 
 Content can be downloaded in various formats and resolutions.
 
 Comments
 ~~~~~~~~
-.. image:: http://np1.github.io/mpsyt-images2/comments.png
+.. image:: http://mps-youtube.github.io/mps-youtube/comments.png
 
 A basic comments browser is available to view YouTube user comments.
 
 Music Album Matching
 ~~~~~~~~~~~~~~~~~~~~
 
-.. image:: http://np1.github.io/mpsyt-images2/album-1.png
+.. image:: http://mps-youtube.github.io/mps-youtube/album-1.png
 
-.. image:: http://np1.github.io/mpsyt-images2/album-2.png
+.. image:: http://mps-youtube.github.io/mps-youtube/album-2.png
 
 An album title can be specified and mps-youtube will attempt to find matches for each track of the album, based on title and duration.  Type ``help search`` for more info.
 
 Customisation
 ~~~~~~~~~~~~~
 
-.. image:: http://np1.github.io/mpsyt-images2/customisation2.png
+.. image:: http://mps-youtube.github.io/mps-youtube/customisation2.png
 
 Search results can be customised to display additional fields and ordered by various criteria.
 
@@ -90,33 +94,46 @@ Installation
 ------------
 Linux
 ~~~~~
+
+**Note**: ``~/.local/bin`` should be in your ``PATH`` for ``--user`` installs.
+
 Using `pip <http://www.pip-installer.org>`_::
 
-    [sudo] pip3 install mps-youtube
+    $ pip3 install --user mps-youtube
 
-To install the experimental development version and try the latest features:
+To install the experimental development version and try the latest features::
 
-    [sudo] pip3 install -U git+https://github.com/mps-youtube/mps-youtube.git
+    $ pip3 install --user -U git+https://github.com/mps-youtube/mps-youtube.git
 
 Installing youtube-dl is highly recommended::
 
-    [sudo] pip3 install youtube-dl
+    $ pip3 install --user youtube-dl
+    and to upgrade:
+    $ pip3 install --user youtube-dl --upgrade
+
+(youtube-dl version dowloaded directly from youtube-dl website can't be used by mps-youtube. While the version in the repositories is usually outdated)
 
 For mpris2 support, install the python bindings for dbus and gobject::
 
-    [sudo] pip3 install dbus-python pygobject
+    $ pip3 install --user dbus-python pygobject
 
 Ubuntu
 ~~~~~~
-You can install mps-youtube directly from the official repositories:
+You can install mps-youtube directly from the official repositories::
 
     [sudo] apt install mps-youtube
+
+Arch Linux
+~~~~~~
+You can install mps-youtube directly from the official repositories::
+
+    [sudo] pacman -S mps-youtube
 
 macOS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Install mpv (recommended player) with `Homebrew <http://brew.sh>`_::
 
-    brew install mpv
+    brew cask install mpv
 
 Alternately, you can install mplayer with `MacPorts <http://www.macports.org>`_::
 
@@ -125,11 +142,16 @@ Alternately, you can install mplayer with `MacPorts <http://www.macports.org>`_:
 Or with `Homebrew <http://brew.sh>`_::
 
     brew install mplayer
+    
+Install mps-youtube using `Homebrew <http://brew.sh>`_::
+
+    brew install mps-youtube
+
 
 Additional Windows installation notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As an alternative to installing with pip, there is a standalone binary available. Go to `Releases <https://github.com/np1/mps-youtube/releases>`_ and download mpsyt-VERSION.exe under downloads for the latest release.
+As an alternative to installing with pip, there is a standalone binary available. Go to `Releases <https://github.com/mps-youtube/mps-youtube/releases>`_ and download mpsyt-VERSION.exe under downloads for the latest release.
 
 Install the python `colorama <https://pypi.python.org/pypi/colorama>`_ module to get colors (optional)::
 
@@ -159,7 +181,7 @@ If you would like to locally build the container you can run the following steps
 
 Check out this repo::
 
-    git clone https://github.com/np1/mps-youtube.git
+    git clone https://github.com/mps-youtube/mps-youtube.git
 
 Enter the directory and run docker build::
 
@@ -192,3 +214,7 @@ IRC
 ---
 
 An IRC channel `#mps-youtube` for the project is available on Freenode (chat.freenode.net:6697). You can join directly by clicking `this link <https://webchat.freenode.net/?randomnick=1&channels=%23mps-youtube&uio=d4>`_.
+
+How to Contribute
+-----------------
+Contributions are welcomed! However, please check out the `contributing page <CONTRIBUTING.md>`_ before making a contribution.

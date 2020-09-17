@@ -26,7 +26,7 @@ except ImportError:
     has_readline = False
 
 from . import cache, g, __version__, __notes__, screen, c, paths, config
-from .util import has_exefile, dbg, xprint, load_player_info
+from .util import has_exefile, dbg, xprint, load_player_info, assign_player
 from .helptext import helptext
 
 mswin = os.name == "nt"
@@ -41,6 +41,9 @@ def init():
     suffix = ".exe" if mswin else ""
     mplayer, mpv = "mplayer" + suffix, "mpv" + suffix
 
+    # check for old pickled binary config and convert to json if so
+    config.convert_old_cf_to_json()
+
     if not os.path.exists(g.CFFILE):
 
         if has_exefile(mpv):
@@ -53,6 +56,10 @@ def init():
 
     else:
         config.load()
+        assign_player(config.PLAYER.get)  # Player is not assigned when config is loaded
+
+    # Make pafy use the same api key
+    pafy.set_api_key(config.API_KEY.get)
 
     _init_readline()
     cache.load()
@@ -90,9 +97,6 @@ def init():
         except ImportError:
             print("could not load MPRIS interface. missing libraries.")
 
-    # Make pafy use the same api key
-    pafy.set_api_key(config.API_KEY.get)
-
 
 def _init_transcode():
     """ Create transcoding presets if not present.
@@ -117,25 +121,25 @@ DELETE_ORIGINAL: True
 # Encode ogg or m4a to mp3 256k
 name: MP3 256k
 extension: mp3
-valid for: ogg,m4a
+valid for: ogg,m4a,webm
 command: ENCODER_PATH -i IN -codec:a libmp3lame -b:a 256k OUT.EXT
 
 # Encode ogg or m4a to mp3 192k
 name: MP3 192k
 extension: mp3
-valid for: ogg,m4a
+valid for: ogg,m4a,webm
 command: ENCODER_PATH -i IN -codec:a libmp3lame -b:a 192k OUT.EXT
 
 # Encode ogg or m4a to mp3 highest quality vbr
 name: MP3 VBR best
 extension: mp3
-valid for: ogg,m4a
+valid for: ogg,m4a,webm
 command: ENCODER_PATH -i IN -codec:a libmp3lame -q:a 0 OUT.EXT
 
 # Encode ogg or m4a to mp3 high quality vbr
 name: MP3 VBR good
 extension: mp3
-valid for: ogg,m4a
+valid for: ogg,m4a,webm
 command: ENCODER_PATH -i IN -codec:a libmp3lame -q:a 2 OUT.EXT
 
 # Encode m4a to ogg

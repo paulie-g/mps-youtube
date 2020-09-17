@@ -1,5 +1,5 @@
-mps-youtube
-===========
+mps-youtube-hd
+==============
 
 .. image:: https://img.shields.io/pypi/v/mps-youtube.svg
     :target: https://pypi.python.org/pypi/mps-youtube
@@ -9,6 +9,13 @@ mps-youtube
     :target: http://pythonwheels.com/
     :alt: Wheel Status
 
+
+Fork Features
+-------------
+- View videos in resolutions higher than 360p, for instance 1080p. This is done
+  by using mpv youtude-dl backend, rather than extracting a single stream.
+- Works with mpv ytdl-format scripts, like `mpv-youtube-quality
+  <https://github.com/jgreco/mpv-youtube-quality>`.
 
 Features
 --------

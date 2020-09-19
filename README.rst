@@ -4,6 +4,8 @@ mps-youtube-hd
 
 Fork Features
 -------------
+.. image:: https://th0rn.github.io/mps-youtube-hd/resolution.png
+
 - View videos in resolutions higher than 360p, for instance 1080p. This is done
   by using mpv youtude-dl backend, rather than extracting a single stream.
 - Works with mpv ytdl-format scripts, like `mpv-youtube-quality

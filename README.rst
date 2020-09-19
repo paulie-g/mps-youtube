@@ -1,21 +1,24 @@
 mps-youtube-hd
 ==============
 
-
-Fork Features
--------------
 .. image:: https://th0rn.github.io/mps-youtube-hd/resolution.png
 
-- View videos in resolutions higher than 360p, for instance 1080p. This is done
-  by using mpv youtude-dl backend, rather than extracting a single stream.
+Added Features
+-------------
+
+- View videos in resolutions higher than 360p, for instance 1080p or 2160p.
+  This is done by utilizing the youtude-dl backend built into mpv, rather than
+  extracting a single stream.
 - Works with mpv ytdl-format scripts, like `mpv-youtube-quality
   <https://github.com/jgreco/mpv-youtube-quality>`_.
 - Requires mpv.
 - Available in the `AUR
   <https://aur.archlinux.org/packages/mps-youtube-hd-git/>`_.
+- **Important: Will not work without a (free) Youtube API key!**
 
-Features
---------
+Original Features
+-----------------
+
 - Search and play audio/video from YouTube
 - Search tracks of albums by album title
 - Search and import YouTube playlists
